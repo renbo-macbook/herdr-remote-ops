@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="dark" name="color-scheme"/>
+<title>HERDR // Remote Ops — Moshi + Tailscale + iPhone</title>
+<meta name="description" content="Interactive mobile-first setup guide: securely control Herdr coding agents on a MacBook from an iPhone using Tailscale and Moshi.">
+<style>/* HERDR // REMOTE OPS — restrained terminal styling, no external fonts or assets */
+:root{
+  color-scheme:dark;
+  --bg:#0c1010;--paper:#131a19;--paper2:#171f1e;--ink:#edf4ee;--muted:#a7b8b0;
+  --line:#30413b;--green:#a0eac0;--green-soft:#1b3026;--amber:#f6cf86;
+  --amber-soft:#302719;--red:#f8a4a0;--red-soft:#332120;
+  --nav:#0d1512;--code:#080e0c;--code-ink:#e3f7e9;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,Liberation Mono,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:86px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.64 var(--sans);-webkit-text-size-adjust:100%}
+a{color:var(--green);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:#d0ffe1}
+button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+h1,h2,h3,p{margin-top:0}p{margin-bottom:12px}strong{font-weight:680}small{color:var(--muted)}
+code,kbd{font:12px/1.5 var(--mono);background:#24302b;color:#c9f1d6;border-radius:4px;padding:2px 5px;overflow-wrap:anywhere}
+kbd{border:1px solid #476254;color:var(--ink)}
+ul,ol{padding-left:21px;margin:8px 0 12px}li{margin:5px 0}li::marker{color:var(--green)}
+#top{background:var(--nav);border-bottom:1px solid #27382e;color:var(--ink);padding:13px max(20px,calc((100vw - 1160px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:20}
+#top .logo{font-family:var(--mono);font-size:12px;font-weight:800;letter-spacing:.03em;display:flex;align-items:center;gap:11px}
+#top .glyph{color:#0c1911;background:var(--green);border-radius:5px;padding:5px 7px;font:800 13px var(--mono)}
+#top .logo-sep{color:#85a797;font-weight:500}
+#top .right{font:10px var(--mono);letter-spacing:.04em;color:#a1baae}
+#progressrail{height:3px;background:#1e332a;position:sticky;top:49px;z-index:20}
+#progressfill{height:100%;width:0;background:var(--green);transition:width .2s}
+.shell{max-width:1160px;margin:0 auto;padding:32px 22px 88px;display:grid;grid-template-columns:205px minmax(0,1fr);gap:40px}
+.sidebar{align-self:start;position:sticky;top:80px}.sidecard{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:17px}
+.sideprogress{display:flex;align-items:center;justify-content:space-between;gap:12px;font:600 12px var(--mono);margin-bottom:11px}
+.sideprogress span:last-child{color:var(--green)}.mini-progress{height:4px;background:#2c4035;border-radius:10px;overflow:hidden}
+.mini-progress span{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.sidehead{margin:20px 0 8px;color:#7f9a8b;font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.sidenav{display:grid;gap:2px;margin:10px 0 17px}
+.sidenav a{display:block;border-radius:5px;padding:7px 9px;font:500 12px var(--mono);text-decoration:none;color:#bfd0c4}
+.sidenav a:hover,.sidenav a:focus{background:var(--green-soft);color:var(--green)}
+.sidefoot{margin:13px 0;color:var(--muted);font-size:11px;line-height:1.55}.reset{background:none;border:0;padding:3px 0;color:var(--green);text-decoration:underline;font-size:12px}
+main{min-width:0}.eyebrow{margin:0 0 12px;color:var(--green);font:600 11px var(--mono);letter-spacing:.06em}
+.hero h1{max-width:720px;font-size:clamp(35px,5vw,61px);line-height:1.08;letter-spacing:-.055em;font-weight:780;margin-bottom:15px}
+.hero .lede{max-width:730px;color:#c7d6cd;font-size:16px;line-height:1.63}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.tag{padding:4px 9px;font:600 10px var(--mono);border:1px solid #394f43;background:var(--paper);color:#b4d3bd;border-radius:4px;letter-spacing:.02em}
+.tag.key{border-color:#658b70;background:var(--green-soft);color:var(--green)}
+.hero-diagram{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1.2fr);align-items:center;gap:9px;background:#0c1712;border:1px solid #354f3b;padding:18px;border-radius:9px;margin:23px 0}
+.node{min-width:0;padding:12px 10px;border:1px solid #405846;border-radius:5px;background:#112018}
+.node strong{display:block;font:700 13px var(--mono);color:#d9f7e3;margin-bottom:3px}
+.node span{display:block;color:#a8c2ac;font-size:11px;line-height:1.45}
+.arr{color:var(--green);font:600 18px var(--mono);text-align:center}.arr small{display:block;font:10px var(--mono);color:#9cb4a0;white-space:nowrap}
+.notice{border-left:3px solid #80b494;background:#182c22;color:#cae8d1;padding:12px 15px;border-radius:0 5px 5px 0;margin:14px 0;font-size:13px}
+.notice>strong{display:block;font:700 12px var(--mono);margin-bottom:4px;color:#d6ffe2}
+.notice.warning{border-color:#d8ad68;background:var(--amber-soft);color:#f0dbb7}
+.notice.warning>strong{color:var(--amber)}
+.notice.danger{border-color:#db847b;background:var(--red-soft);color:#f0cfca}
+.notice.danger>strong{color:var(--red)}
+.notice p:last-child{margin-bottom:0}.notice code{background:rgba(255,255,255,.09);color:inherit}
+.controls{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:20px;margin:24px 0}
+.controls h2{font:700 17px var(--mono);letter-spacing:-.02em;margin:0 0 7px}
+.controls p{font-size:12px;color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:18px 0}
+.field label{display:block;margin:0 0 6px;font:700 11px var(--mono);color:#d7e9da}
+.field input{width:100%;min-width:0;border:1px solid #45604e;border-radius:6px;padding:11px 12px;background:#0e1712;color:#e8f6ec;font:12px var(--mono)}
+.field input[aria-invalid=true]{border-color:#e5968a}
+.field .help,.field .error{display:block;font-size:11px;margin-top:6px;color:var(--muted)}
+.field .error{display:none;color:var(--red)}.field input[aria-invalid=true]~.error{display:block}
+.data-note{font-size:11px!important;line-height:1.6}.transport{border-top:1px solid var(--line);display:flex;align-items:flex-start;gap:9px;padding-top:14px;font-size:12px;margin-top:12px}
+.transport input{accent-color:var(--green);width:17px;height:17px;margin-top:2px}
+.section{margin:43px 0 0;scroll-margin-top:82px}.section-title{display:flex;align-items:baseline;gap:11px;border-bottom:1px solid #405749;padding-bottom:12px;margin-bottom:20px}
+.section-index{font:700 11px var(--mono);color:var(--green);border:1px solid #48694f;padding:4px 8px;border-radius:4px}
+.section-title h2{font-size:23px;font-weight:710;letter-spacing:-.025em;line-height:1.23;margin:0}
+.section-intro{color:var(--muted);font-size:14px;margin:-5px 0 17px}
+.step{background:var(--paper);border:1px solid #30463b;border-radius:8px;padding:20px;display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;margin:12px 0}
+.step:hover{border-color:#4b6656}.step.complete{background:#14231a;border-color:#62816a}.step.optional{border-style:dashed}
+.step .check{width:20px;height:20px;margin:3px 0 0;accent-color:#a0eac0;cursor:pointer}
+.step h3{font-size:16px;line-height:1.38;margin:3px 0 10px;font-weight:710;letter-spacing:-.01em}
+.step .body{min-width:0}.step .body>p:last-child{margin-bottom:0}
+.step-id{font:600 11px var(--mono);color:var(--green);letter-spacing:.04em}
+.opt-label{font:600 9px var(--mono);color:var(--amber);border:1px solid #846947;border-radius:4px;padding:2px 5px;vertical-align:2px}
+.code{position:relative;margin:12px 0 16px;border:1px solid #35513e;border-radius:6px;background:var(--code);overflow:hidden}
+.code pre{margin:0;padding:39px 14px 15px;color:var(--code-ink);font:12px/1.67 var(--mono);white-space:pre;overflow:auto;tab-size:2;min-height:62px}
+.code .codelabel{position:absolute;top:11px;left:13px;color:#8bbba1;font:600 10px var(--mono);letter-spacing:.045em;text-transform:uppercase}
+.code .copy{position:absolute;top:7px;right:8px;border:1px solid #587b60;background:#234230;color:#dffae7;font:700 11px var(--mono);padding:5px 10px;border-radius:4px;z-index:1}
+.code .copy:hover:not(:disabled){background:#31543c}.code.is-invalid{border-color:#8e7547}.code.is-invalid .copy{background:#514126}
+.inline-table{width:100%;border:1px solid var(--line);border-collapse:separate;border-spacing:0;border-radius:5px;overflow:hidden;font-size:13px;margin:12px 0}
+.inline-table td,.inline-table th{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+.inline-table th{color:var(--green);background:#19291f;font:600 11px var(--mono)}.inline-table tr:last-child td{border-bottom:0}.inline-table td:first-child{font-weight:680;width:32%}
+.validation{border:1px solid #477252;background:#15291c;border-radius:7px;padding:16px;margin:16px 0}
+.validation h3{font-size:14px;margin:0 0 9px}.testgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.testitem{display:flex;align-items:flex-start;gap:9px;font-size:12px}.testitem input{accent-color:var(--green);margin-top:4px}
+.refbox{background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:14px 18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px}
+.refbox a{display:block;font-size:12px;line-height:1.5;padding:5px 0}
+.trouble details{background:var(--paper);border:1px solid var(--line);border-radius:6px;margin:7px 0;padding:11px 15px}
+.trouble summary{font-weight:680;cursor:pointer}.trouble details p{margin:11px 0 2px;font-size:13px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:19px;margin-top:35px;font-size:12px;color:var(--muted)}
+.ghostbtn{background:#1c3023;border:1px solid #5b8365;color:var(--green);padding:8px 11px;border-radius:5px;font:700 11px var(--mono)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:12px 0}
+.info{background:var(--paper2);border:1px solid var(--line);padding:13px;border-radius:7px}
+.info h3{font-size:14px;margin:0 0 5px}.info p{font-size:12px;color:var(--muted);margin:0}
+@media(max-width:850px){.shell{grid-template-columns:170px minmax(0,1fr);gap:19px;padding:23px 16px 65px}.hero-diagram{gap:5px;padding:12px}.node{padding:9px 8px}}
+@media(max-width:680px){
+ #top{padding:10px 14px;min-height:49px}.logo-sep{display:none}#top .right{font-size:9px;max-width:45%;text-align:right;line-height:1.5}
+ .shell{display:block;padding:18px 13px 60px}.sidebar{position:static;margin-bottom:22px}.sidecard{padding:11px 12px}
+ .sidenav{display:flex;overflow-x:auto;gap:5px;flex-wrap:nowrap;margin:9px 0 7px;padding:2px 1px 5px;scrollbar-width:thin}
+ .sidenav a{border:1px solid #344b3d;background:#121e16;padding:7px 9px;white-space:nowrap;flex:none;font-size:11px}
+ .sidehead,.sidefoot{display:none}.sideprogress{margin-bottom:7px}
+ .hero h1{font-size:clamp(35px,10vw,48px);letter-spacing:-.05em}.hero .lede{font-size:15px}
+ .meta{gap:6px}.tag{font-size:9px;padding:4px 7px}
+ .hero-diagram{grid-template-columns:1fr;gap:4px;text-align:left;padding:12px}.node{padding:11px 12px}
+ .arr{font-size:16px;display:flex;justify-content:center;align-items:center;height:25px}.arr small{margin-left:10px}
+ .formgrid,.testgrid,.refbox,.two{grid-template-columns:1fr}.controls{padding:16px;margin:20px 0}
+ .section{margin-top:36px}.section-title h2{font-size:20px}.step{padding:16px 12px 16px 10px;gap:9px;grid-template-columns:23px minmax(0,1fr)}
+ .step h3{font-size:15px}.code pre{font-size:11px;padding:39px 11px 14px}.inline-table td,.inline-table th{padding:8px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}#progressfill,.mini-progress span{transition:none}}
+@media print{#top,#progressrail,.sidebar,.copy,.reset,.transport{display:none!important}body{background:#fff;color:#000}.shell{display:block;padding:0}.step{break-inside:avoid;border-color:#999;background:#fff}.section{break-before:page}.controls{background:#fff}.hero-diagram,.node{background:#fff;color:#000}.node strong,.node span{color:#000}.code pre{background:#eee;color:#111;white-space:pre-wrap}.section-index,.step-id{color:#165e32}.notice{color:#222;background:#eee}}
+
+/* Accessible reset confirmation — intentionally native and minimal */
+dialog.reset-dialog{width:min(92vw,430px);border:1px solid #62806b;background:#121e18;color:var(--ink);border-radius:10px;padding:22px;box-shadow:0 20px 70px #000a}
+dialog.reset-dialog::backdrop{background:#000a;backdrop-filter:blur(2px)}
+dialog.reset-dialog h2{font:700 17px var(--mono);margin:0 0 10px;color:var(--green)}
+dialog.reset-dialog p{font-size:13px;color:var(--muted)}
+.dialog-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+.dialog-actions button{padding:10px 15px;border-radius:5px;border:1px solid #647769;color:var(--ink);background:#25352b;font:600 12px var(--mono)}
+.dialog-actions .danger-action{background:#59302d;border-color:#a66a63;color:#ffe5e1}
+.dialog-actions button:focus-visible{outline:2px solid var(--green)}
+</style>
+</head>
+<body>
+<header id="top"><div class="logo"><span aria-hidden="true" class="glyph">&gt;_</span><span>HERDR <span class="logo-sep">// REMOTE OPS</span></span></div><span class="right">MACBOOK / TAILSCALE / MOSHI / IPHONE</span></header>
+<div aria-hidden="true" id="progressrail"><div id="progressfill"></div></div>
+<div class="shell">
+<aside aria-label="Guide navigation" class="sidebar"><div class="sidecard">
+<div class="sideprogress"><span>Setup progress</span><span id="progressText">0 / 0</span></div><div class="mini-progress"><span id="sideFill"></span></div>
+<div class="sidehead">Follow in order</div>
+<nav class="sidenav">
+<a href="#overview">Overview</a><a href="#preflight">01 · Prepare</a><a href="#tailscale">02 · Tailscale</a><a href="#mac-ssh">03 · Mac SSH</a><a href="#iphone">04 · Moshi</a><a href="#harden">05 · Harden</a><a href="#herdr">06 · Herdr + Moshi</a><a href="#reliability">07 · Reliability</a><a href="#optional">08 · Extras</a><a href="#recovery">09 · Recovery</a><a href="#sources">Sources</a>
+</nav><div class="sidefoot">Local interactive guide. Your values stay in this browser if storage is permitted. No passwords, private keys or QR tokens belong here.</div><button class="reset" id="reset" type="button">Reset checklist</button>
+</div></aside>
+<main>
+<section class="hero" id="overview">
+<p class="eyebrow">// field guide  ·  MacBook ↔ iPhone</p><h1>Your agents. In your pocket.</h1>
+<p class="lede">Run <strong>Herdr TUI, Hermes and Codex on your MacBook</strong> and control them from your iPhone. <strong>Tailscale</strong> handles private networking, <strong>Moshi</strong> provides a mobile-friendly SSH terminal, and <strong>Herdr</strong> keeps your panes running when you disconnect.</p>
+<div class="meta"><span class="tag key">RECOMMENDED: MOSHI EASY PAIR</span><span class="tag">No router ports</span><span class="tag">macOS 13+</span><span class="tag">iOS 18+ (Moshi)</span><span class="tag">Guide works offline</span></div>
+<div aria-label="iPhone running Moshi connects through Tailscale to macOS SSH, then Herdr manages terminal agents on the MacBook" class="hero-diagram" role="img"><div class="node"><strong>iPhone</strong><span>Moshi terminal</span></div><div class="arr">→<small>Tailscale VPN</small></div><div class="node"><strong>Private tailnet</strong><span>Encrypted WireGuard network</span></div><div class="arr">→<small>SSH TCP 22</small></div><div class="node"><strong>MacBook</strong><span>OpenSSH → Herdr → Agents</span></div></div>
+<div class="notice warning"><strong>One app for mobile control</strong>This guide uses <strong>Moshi</strong> as the iPhone terminal. Its <strong>Easy Pair QR</strong> flow creates a phone-side SSH key and configures the host; you usually do not need to copy SSH keys manually. Start with plain SSH. Upgrade to the optional Mosh transport only after the base connection works. <strong>Herdr Mobile / herdr-core is a different product path</strong> and will not show Herdr TUI sessions.</div>
+<div class="notice danger"><strong>Security boundary — read before starting</strong>Turning on macOS Remote Login typically exposes SSH on your Mac's LAN interfaces as well as its Tailscale interface. A restrictive Tailscale grant does <strong>not</strong> block LAN SSH. This guide mitigates that with SSH keys, disabled password authentication, user restrictions and an optional source-IP restriction. It does <strong>not</strong> claim that port 22 listens only on Tailscale. A verified host firewall is necessary if you require strict network-interface isolation.</div>
+</section>
+<section aria-labelledby="value-title" class="controls" id="values">
+<h2 id="value-title">Device values  /  local only</h2><p>Enter these after connecting the devices to Tailscale. The examples and copyable commands update automatically. These are identifiers, <strong>not passwords or private keys</strong>.</p>
+<div class="formgrid">
+<div class="field"><label for="username">Mac short username</label><input autocomplete="off" data-value="username" id="username" placeholder="example: macuser" spellcheck="false"/><span class="help">Get this from <code>whoami</code>.</span><span class="error">Use only letters, numbers, underscores, dots or hyphens; start with a letter or underscore.</span></div>
+<div class="field"><label for="macip">Mac Tailscale IPv4</label><input autocomplete="off" data-value="macip" id="macip" inputmode="decimal" placeholder="100.101.102.103" spellcheck="false"/><span class="help">From Tailscale → Machines, Mac row.</span><span class="error">Enter an IPv4 address in Tailscale's 100.64.0.0/10 range.</span></div>
+<div class="field"><label for="phoneip">iPhone Tailscale IPv4</label><input autocomplete="off" data-value="phoneip" id="phoneip" inputmode="decimal" placeholder="100.103.104.105" spellcheck="false"/><span class="help">From Tailscale → Machines, iPhone row.</span><span class="error">Enter an IPv4 address in Tailscale's 100.64.0.0/10 range.</span></div>
+<div class="field"><label for="macdns">Mac MagicDNS hostname <small>(optional)</small></label><input autocomplete="off" data-value="macdns" id="macdns" placeholder="home-mac.example-tailnet.ts.net" spellcheck="false"/><span class="help">From Tailscale Machines; preferred Moshi host (full *.ts.net name).</span><span class="error">Enter a hostname such as home-mac.tailnet.ts.net (no spaces or URL scheme).</span></div>
+</div>
+<p class="data-note">Values and progress are stored in <strong>this browser's local storage where supported</strong>. On <code>file://</code> pages, persistence can vary by browser; keep a separate note of addresses. Nothing in this page intentionally uploads your values. External documentation links open only when clicked.</p>
+<label class="transport"><input id="moshToggle" type="checkbox"/><span>Advanced option: include Mosh UDP ports in the generated Tailscale policy (only if you actually install and use Mosh)</span></label>
+</section>
+<section class="section" id="preflight"><div class="section-title"><span class="section-index">01</span><h2>Prepare both devices</h2></div><p class="section-intro">Do these checks before changing your Mac's network services.</p>
+<article class="step"><input aria-label="Mark P1 complete" class="check" data-step="P1" type="checkbox"/><div class="body"><div class="step-id">P1</div><h3>Verify Mac requirements and existing agent setup</h3>
+<p>Use <strong>macOS 13 Ventura or newer</strong> with current Tailscale (minimum according to Tailscale's current macOS variant comparison). The iPhone needs <strong>iOS 18 or newer</strong> for the current Moshi App Store release. Install Homebrew on the Mac from <a href="https://brew.sh/" rel="noopener noreferrer" target="_blank">brew.sh</a> if necessary.</p>
+<div class="code"><span class="codelabel">Mac Terminal — read-only</span><pre>sw_vers -productVersion
+uname -m
+whoami
+brew --version</pre></div>
+<p>Copy the result of <code>whoami</code> to the Mac username field. Before starting remote setup, make sure your normal Hermes and Codex commands work locally.</p></div></article>
+<article class="step"><input aria-label="Mark P2 complete" class="check" data-step="P2" type="checkbox"/><div class="body"><div class="step-id">P2</div><h3>Secure the iPhone and Tailscale identity</h3>
+<p>Use an iPhone running <strong>iOS 18+</strong>, with a strong passcode and Face ID/Touch ID. Keep Moshi, Tailscale and iOS updated. Enable MFA/passkeys for the account used to sign in to Tailscale and preserve account recovery methods.</p>
+<p>Have physical access to the Mac for initial pairing. <strong>Do not enter passwords, private SSH keys, tokens or QR codes into this HTML file.</strong></p></div></article>
+<article class="step"><input aria-label="Mark P3 complete" class="check" data-step="P3" type="checkbox"/><div class="body"><div class="step-id">P3</div><h3>Choose which macOS account runs Herdr</h3><p><strong>Simplest:</strong> use your existing non-shared Mac account so Hermes, Codex, Git repositories and credentials remain available. <strong>Stronger isolation:</strong> create a dedicated standard account, but move/configure its projects and agent credentials there first. In either case, grant Remote Login to <em>only this account</em>.</p><div class="notice warning">A remote SSH session has the permissions of the account you log into. Approving agent commands from your phone can still cause local file writes or network actions. Keep your existing Hermes/Codex review and approval controls in place.</div></div></article>
+</section>
+<section class="section" id="tailscale"><div class="section-title"><span class="section-index">02</span><h2>Connect Mac and iPhone with Tailscale</h2></div><p class="section-intro">Make the private network work before configuring SSH.</p>
+<article class="step"><input aria-label="Mark T1 complete" class="check" data-step="T1" type="checkbox"/><div class="body"><div class="step-id">T1</div><h3>Install Tailscale on the MacBook</h3><ol><li>Download the <a href="https://tailscale.com/download/mac" rel="noopener noreferrer" target="_blank">official Standalone macOS variant</a>.</li><li>Install it, approve macOS VPN/system-extension prompts, and sign in using your secured identity-provider account.</li><li>Do <strong>not</strong> install the Standalone and Mac App Store variants at the same time.</li></ol><p>The macOS Standalone client is recommended here. You are using <em>macOS's SSH server through Tailscale</em>, not the separately configured Tailscale SSH server.</p></div></article>
+<article class="step"><input aria-label="Mark T2 complete" class="check" data-step="T2" type="checkbox"/><div class="body"><div class="step-id">T2</div><h3>Install Tailscale on the iPhone</h3><p>Install <a href="https://tailscale.com/download/ios" rel="noopener noreferrer" target="_blank">Tailscale for iOS</a> from its official link. Sign in to <strong>the same tailnet</strong>, approve the VPN prompt and turn the connection on. You can leave cellular data enabled. For now, keep the Mac reachable locally.</p></div></article>
+<article class="step"><input aria-label="Mark T3 complete" class="check" data-step="T3" type="checkbox"/><div class="body"><div class="step-id">T3</div><h3>Record each device's address</h3><p>Open <a href="https://login.tailscale.com/admin/machines" rel="noopener noreferrer" target="_blank">Tailscale → Machines</a>. Confirm both devices are connected; copy their <code>100.x.y.z</code> addresses and your Mac's full MagicDNS name into the form above. Check that Mac and iPhone addresses are <strong>different</strong>.</p><p>Optionally enable <a href="https://tailscale.com/docs/features/access-control/device-management/device-approval" rel="noopener noreferrer" target="_blank">device approval</a> under Device management and approve any pending device. Keep track of Tailscale node-key expiry and renewal dates. <strong>Reauthentication happens in the Tailscale app, not in Moshi.</strong> Reauthenticate both devices before travel, while you still have local access to your Mac. An expired Mac key can make remote recovery difficult; see the official <a href="https://tailscale.com/docs/features/access-control/key-expiry" rel="noopener noreferrer" target="_blank">key-expiry guidance</a> before changing expiry policy.</p><div class="notice warning">Device approval prevents unapproved new devices joining. It does not itself restrict an already approved device to port 22. The narrow access grant comes later.</div></div></article><article class="step"><input aria-label="Mark T4 complete" class="check" data-step="T4" type="checkbox"/><div class="body"><div class="step-id">T4</div><h3>Secure and periodically review your tailnet</h3><p>These Tailscale console checks are low maintenance but useful even for a one-person setup:</p>
+<ul><li><strong>Security contact:</strong> under tailnet contact preferences, verify the security-notification address points to an inbox you monitor.</li>
+<li><strong>Unused credentials:</strong> check <a href="https://login.tailscale.com/admin/settings/keys" rel="noopener noreferrer" target="_blank">Keys</a> and revoke unused authorization keys, API access tokens and OAuth clients. Do not revoke credentials whose purpose you have not established.</li>
+<li><strong>Audit logs:</strong> inspect <a href="https://login.tailscale.com/admin/logs" rel="noopener noreferrer" target="_blank">configuration audit logs</a> after substantial changes or when you suspect unauthorized modifications.</li>
+<li>Maintain Tailscale updates on both devices, and remove lost or retired machines promptly.</li></ul>
+<p><a href="https://tailscale.com/docs/reference/best-practices/security" rel="noopener noreferrer" target="_blank">Tailscale security guidance</a> gives the rationale and current menu locations.</p></div></article>
+</section>
+<section class="section" id="mac-ssh"><div class="section-title"><span class="section-index">03</span><h2>Configure macOS Remote Login</h2></div><p class="section-intro">Do not disable passwords until the iPhone's key login has been proven to work.</p>
+<article class="step"><input aria-label="Mark S1 complete" class="check" data-step="S1" type="checkbox"/><div class="body"><div class="step-id">S1</div><h3>Enable Apple's SSH server for one user</h3><p>On the Mac open <strong>System Settings → General → Sharing → Remote Login</strong> and select:</p><table class="inline-table"><tr><th>Setting</th><th>Value</th></tr><tr><td>Remote Login</td><td><strong>On</strong></td></tr><tr><td>Allow access for</td><td>Only these users</td></tr><tr><td>Allowed user</td><td>Your selected Mac account only; remove any broad Administrators entry</td></tr><tr><td>Allow full disk access for remote users</td><td>Off unless strictly required for your specific folders</td></tr></table><p>Make sure your router does not forward <code>22</code>, <code>5900</code> or <code>445</code> to the Mac. SSH might still accept connections on your home LAN, which is why keys and access restrictions matter.</p></div></article>
+<article class="step"><input aria-label="Mark S2 complete" class="check" data-step="S2" type="checkbox"/><div class="body"><div class="step-id">S2</div><h3>Confirm Tailscale SSH is not intercepting port 22</h3>
+<p><strong>macOS SSH over Tailscale</strong> and <strong>Tailscale SSH</strong> are different. This guide needs Apple's OpenSSH server to handle the iPhone's key. Moshi Easy Pair may refuse to run if Tailscale SSH intercepts the connection.</p>
+<p>The recommended <strong>Tailscale Standalone macOS app cannot act as a Tailscale SSH server</strong>, so this should already be off in the intended configuration. If you previously used the open-source <code>tailscaled</code> variant or changed your setup, check it explicitly:</p>
+<div class="code"><span class="codelabel">Mac Terminal — read-only, current app variant</span><pre>TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale debug prefs | grep -i RunSSH</pre></div>
+<p>If the output includes <code>RunSSH: true</code> (or an equivalent true value), stop and disable Tailscale SSH in the actual Tailscale installation <em>before</em> pairing. For the open-source CLI variant the documented command is <code>tailscale set --ssh=false</code>. Confirm that you are not dependent on that service first. A missing field is <em>not proof</em> by itself; verify the variant and allow <code>moshi-hook host setup</code> to run its own preflight.</p>
+<p><code>TAILSCALE_BE_CLI=1</code> is a <strong>documented Tailscale macOS CLI override</strong>: it forces the app executable to print command output rather than launch its GUI. It is intentional, not a typo. If the standalone installer provided the <code>tailscale</code> shell command, you can instead run <code>tailscale debug prefs</code>. <a href="https://tailscale.com/docs/reference/tailscale-cli?tab=macos" rel="noopener noreferrer" target="_blank">Tailscale CLI reference</a>.</p><p><a href="https://tailscale.com/docs/features/tailscale-ssh" rel="noopener noreferrer" target="_blank">Tailscale SSH server documentation</a> · <a href="https://getmoshi.app/guides/tailscale" rel="noopener noreferrer" target="_blank">Moshi Tailscale guide</a>.</p></div></article><article class="step"><input aria-label="Mark S3 complete" class="check" data-step="S3" type="checkbox"/><div class="body"><div class="step-id">S3</div><h3>Record the Mac SSH host-key fingerprint</h3><p>Record the host's <strong>Ed25519 SHA256 fingerprint</strong> locally. Compare it with the identity recorded in Moshi during pairing; do not blindly accept a changed host key.</p>
+<div class="code"><span class="codelabel">Mac Terminal — read-only</span><pre>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</pre></div>
+<p>Moshi Easy Pair <strong>pins the host fingerprint in the QR code when <code>moshi-hook</code> is version 0.4.32 or later</strong>. Verify your installed version before relying on QR fingerprint pinning. <a href="https://getmoshi.app/docs/connections" rel="noopener noreferrer" target="_blank">Moshi authentication and host-key documentation</a>.</p></div></article>
+</section>
+<section class="section" id="iphone"><div class="section-title"><span class="section-index">04</span><h2>Set up Moshi on your iPhone</h2></div><p class="section-intro">Primary path: Moshi Easy Pair (QR). It creates the SSH key and saved connection for you. Manual setup is only a fallback.</p>
+<article class="step"><input aria-label="Mark I1 complete" class="check" data-step="I1" type="checkbox"/><div class="body"><div class="step-id">I1</div><h3>Install Moshi and the host pairing helper</h3>
+<p>Install <a href="https://apps.apple.com/app/id6757859949" rel="noopener noreferrer" target="_blank">Moshi for iPhone</a>. Open the app and locate <strong>Easy Pair</strong> in onboarding. On the Mac, install the official Moshi helper:</p>
+<div class="code"><span class="codelabel">Mac Terminal — official Moshi Homebrew tap</span><pre>brew tap rjyo/moshi
+brew trust rjyo/moshi
+brew install moshi-hook
+moshi-hook --version</pre></div>
+<p>If Homebrew prompts you to inspect or trust the tap, check that it is the expected project. The helper handles SSH Easy Pair and can later support optional agent notifications.</p>
+<div class="notice warning"><strong>Do not install Mosh transport just to get SSH working</strong>Herdr itself preserves terminal panes. <code>mosh-server</code> and <code>tmux</code> are optional for the plain-SSH + Herdr workflow, although particular Moshi helper versions may request them in their pairing preflight. If <code>moshi-hook host setup</code> specifically asks for these dependencies, install with <code>brew install mosh tmux</code> and retry; otherwise leave them out.</div>
+<p><strong>Cost:</strong> SSH is available in Moshi Free. Mosh transport and automatic Herdr/tmux reattachment are currently Pro features; no paid upgrade is necessary for manual Herdr reattachment.</p></div></article>
+<article class="step"><input aria-label="Mark I2 complete" class="check" data-step="I2" type="checkbox"/><div class="body"><div class="step-id">I2</div><h3>Pair the iPhone using Moshi's QR code</h3>
+<p>Confirm Tailscale is connected on both devices, Remote Login is enabled and step S2 has been checked. Run the helper locally on the unlocked Mac:</p>
+<div class="code"><span class="codelabel">Mac Terminal — Easy Pair</span><pre>moshi-hook host setup</pre></div>
+<ol><li>Inspect the proposed destination: use your Mac's full Tailscale <strong>MagicDNS name</strong> or <strong>100.x.y.z</strong> address, not its public or LAN address.</li><li>In Moshi on the iPhone, scan the QR code via <strong>Easy Pair</strong>.</li><li>Moshi generates the SSH private key on the phone, transfers only the public key into the Mac user's <code>authorized_keys</code>, and creates the saved connection.</li><li>For <code>moshi-hook</code> ≥ 0.4.32 the QR also pins the SSH host fingerprint. Compare it independently with S3.</li></ol>
+<div class="notice danger"><strong>Treat the QR as a temporary access credential</strong>Anyone who scans the QR while it is valid may claim SSH access. Do not screenshot or share it, and close pairing as soon as your phone is paired.</div>
+<p><strong>Important:</strong> SSH Easy Pair is distinct from <code>moshi-hook pair --token</code>, which pairs the <em>optional agent notification service</em>, not the SSH login.</p></div></article>
+<article class="step"><input aria-label="Mark I3 complete" class="check" data-step="I3" type="checkbox"/><div class="body"><div class="step-id">I3</div><h3>Verify the first SSH connection in Moshi</h3>
+<p>Open the saved host in Moshi. Force <strong>Connection type: SSH</strong> for the first test rather than Auto/Mosh. Check host is the MagicDNS/100.x address, port <code>22</code>, correct Mac short username and the key from Easy Pair.</p>
+<p>Confirm the SSH host fingerprint from step S3. Connect and verify the remote terminal is your Mac:</p>
+<div class="code"><span class="codelabel">Moshi terminal on iPhone — read-only</span><pre>whoami
+pwd
+uname -s</pre></div>
+<p>Expected results: the selected Mac account name, an expected working directory, and <code>Darwin</code>. Keep a separate local Terminal open on the Mac while you harden SSH in the next section.</p></div></article>
+<article class="step optional"><input aria-label="Mark I4 complete" class="check" data-optional="true" data-step="I4" type="checkbox"/><div class="body"><div class="step-id">I4<span class="opt-label">FALLBACK</span></div><h3>Fallback: set up your SSH key manually</h3>
+<p>Use this only when the QR flow does not work. In Moshi create a new connection using the Mac's <strong>MagicDNS name or Tailscale IPv4</strong>, port <code>22</code>, the Mac short username, and connection type <strong>SSH</strong>. Generate an Ed25519 key in Moshi and copy <em>only the public key</em> to the Mac.</p>
+<div class="code"><span class="codelabel">Mac Terminal — install public key manually</span><pre>umask 077
+mkdir -p ~/.ssh
+nano ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys</pre></div>
+<p>In <code>nano</code>, add the full public key on its own line, save with <kbd>Ctrl+O</kbd> and exit with <kbd>Ctrl+X</kbd>. Preserve your existing authorized keys. Never paste the iPhone's <em>private</em> key into this guide, any chat or a repository.</p>
+<p><strong>If Easy Pair already worked, leave this fallback unchecked.</strong> It does not count toward required progress.</p></div></article>
+<article class="step"><input aria-label="Mark I5 complete" class="check" data-step="I5" type="checkbox"/><div class="body"><div class="step-id">I5</div><h3>Make Moshi comfortable on a small screen</h3>
+<ul><li><strong>Moshi Pro:</strong> use the dedicated <strong>Herdr shortcut panel</strong>, session picker and multiplexer gestures for easier one-handed control. <strong>Moshi Free:</strong> use the SSH terminal, regular toolbar and keyboard/control keys, plus up to three custom shortcuts; the integrated multiplexer controls are Pro features.</li>
+<li>Use <strong>landscape orientation</strong> for multi-pane work and <strong>zoom a pane</strong> for reviewing output.</li>
+<li><strong>Moshi Pro:</strong> choose the intended session in the Herdr picker. <strong>Moshi Free:</strong> run <code>herdr</code> or <code>herdr session attach work</code> at the SSH prompt.</li>
+<li>Keep <strong>agent forwarding off</strong> unless you explicitly need it. The iPhone client is a terminal, not a Git credential migration tool.</li></ul>
+<p><strong>Moshi Free:</strong> full SSH terminal access, terminal toolbar and up to three custom shortcuts. You can type <code>herdr</code> and send its key combinations manually. <strong>Moshi Pro:</strong> adds the integrated Herdr session picker, dedicated multiplexer shortcut panel, multiplexer-navigation gestures and automatic reattachment. This does not mean that all basic touch gestures or shortcuts are Pro-only. <a href="https://getmoshi.app/docs/subscription" rel="noopener noreferrer" target="_blank">Official Free vs Pro feature list</a>.</p></div></article></section>
+<section class="section" id="harden"><div class="section-title"><span class="section-index">05</span><h2>Harden SSH and Tailscale access</h2></div><p class="section-intro">Do these after successful Moshi key login. Keep physical Mac access while testing; never harden SSH blindly.</p>
+<article class="step"><input aria-label="Mark H1 complete" class="check" data-step="H1" type="checkbox"/><div class="body"><div class="step-id">H1</div><h3>Verify the SSH config supports include files</h3><p>Apple's OpenSSH configuration can include <code>/etc/ssh/sshd_config.d/</code> snippets. Check before creating one. If the output does <strong>not</strong> include that directory, stop this step and consult your macOS version's SSH documentation rather than assuming the snippet is active.</p><div class="code"><span class="codelabel">Run on Mac</span><pre>grep -nE '^[[:space:]]*Include[[:space:]]+' /etc/ssh/sshd_config
+ls -la /etc/ssh/sshd_config.d/ 2&gt;/dev/null</pre></div><p class="command-note">The order of first-seen sshd settings matters. The effective-configuration test in H3 is mandatory.</p></div></article>
+<article class="step"><input aria-label="Mark H2 complete" class="check" data-step="H2" type="checkbox"/><div class="body"><div class="step-id">H2</div><h3>Disable SSH passwords — only after key login works</h3><p>Create a focused early-loading drop-in on the Mac. This is deliberately <strong>not</strong> a rewrite of Apple's main config. Test syntax before opening any new remote connection.</p><div class="code"><span class="codelabel">Run on Mac</span><pre>sudo tee /etc/ssh/sshd_config.d/050-herdr-key-only.conf &gt;/dev/null &lt;&lt;'EOF'
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+EOF
+sudo /usr/sbin/sshd -t</pre></div><p>If <code>sshd -t</code> reports an error, do not disconnect; fix the file or undo it using the rollback below. A successful syntax check alone does not prove the settings are active.</p><div class="code"><span class="codelabel">Rollback (only if needed)</span><pre>sudo rm /etc/ssh/sshd_config.d/050-herdr-key-only.conf
+sudo /usr/sbin/sshd -t</pre></div></div></article>
+<article class="step"><input aria-label="Mark H3 complete" class="check" data-step="H3" type="checkbox"/><div class="body"><div class="step-id">H3</div><h3>Inspect the effective SSH settings and reconnect</h3><p>Run the first command locally. Confirm all four relevant lines report the expected values, particularly <code>passwordauthentication no</code> and <code>kbdinteractiveauthentication no</code>.</p><div class="code"><span class="codelabel">Run on Mac</span><pre data-template="true">sudo /usr/sbin/sshd -T -C user={{username}},host=localhost,addr={{phoneip}} | grep -E '^(pubkeyauthentication|passwordauthentication|kbdinteractiveauthentication|permitrootlogin) '</pre></div><div class="code"><span class="codelabel">Expected values</span><pre>pubkeyauthentication yes
+passwordauthentication no
+kbdinteractiveauthentication no
+permitrootlogin no</pre></div><p>Close the iPhone connection and open a <strong>brand-new</strong> SSH connection. It must still work. If the effective values are wrong, stop and investigate before relying on the hardening.</p></div></article>
+<article class="step"><input aria-label="Mark H4 complete" class="check" data-step="H4" type="checkbox"/><div class="body"><div class="step-id">H4</div><h3>Restrict Tailscale traffic to your iPhone → Mac SSH</h3><p>Open <a href="https://login.tailscale.com/admin/acls" rel="noopener noreferrer" target="_blank">Tailscale → Access controls</a>. The example policy below is appropriate <strong>only for a dedicated tailnet where no other access is required</strong>. It permits the iPhone to open TCP port 22 on the Mac, but no other ports or device-to-device paths.</p><div class="code" id="policybox"><span class="codelabel">Example tailnet policy (JSON)</span><pre aria-live="polite" id="policyPre">Enter both Tailscale IP addresses above to generate the policy.</pre></div><div class="notice danger"><strong>Do not blindly overwrite an existing policy</strong>Remove or narrow any broad allow-all <code>acls</code> and <code>grants</code> rules, because grants are additive, not overriding. If other devices, Tailscale SSH policies, groups, tags or subnet routes exist, preserve their required rules and merge this grant carefully. Back up your policy first. Tailscale rules do not filter the Mac's LAN interface.</div><p>Save only after the console validates the policy. Open a fresh iPhone SSH connection afterward. Keep local access available until it works. Tailscale-granted IP paths allow the matching devices to ping one another even if only TCP 22 is listed.</p></div></article>
+<article class="step optional"><input aria-label="Mark H5 optional step complete" class="check" data-optional="true" data-step="H5" type="checkbox"/><div class="body"><div class="step-id">H5 <span class="opt-label">OPTIONAL · ADVANCED</span></div><h3>Restrict the phone's SSH public key to its Tailscale IPv4</h3><p>After the base setup works, you can further limit <em>that one key</em> to connections originating from the iPhone's tailnet IPv4. Edit its existing line in <code>~/.ssh/authorized_keys</code> to begin with the generated prefix, followed by a space and the <strong>existing complete public key</strong>.</p><div class="code"><span class="codelabel">Prefix to add before your phone's public key</span><pre data-template="true">from="{{phoneip}}" </pre></div><p>For example, the resulting single line would be <code>from="100.x.y.z" ssh-ed25519 AAAA... phone-key</code>. This is an OpenSSH source-IP restriction, <strong>not</strong> a firewall. Retest SSH immediately from Moshi over Tailscale, and remember that Tailscale device re-enrollment can change the iPhone's source IP. Do not accidentally modify keys for other devices.</p></div></article>
+<article class="step"><input aria-label="Mark H6 complete" class="check" data-step="H6" type="checkbox"/><div class="body"><div class="step-id">H6</div><h3>Test that password-only SSH authentication fails</h3>
+<p>First, reconnect from <strong>Moshi using the saved key</strong>; it must work. Then run the negative test below locally on the Mac. It intentionally disables SSH public-key authentication for this one command.</p>
+<div class="code"><span class="codelabel">Mac Terminal — should reject password-only SSH</span><pre data-template="true">ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive {{username}}@127.0.0.1</pre></div>
+<p>The expected outcome is <strong>permission denied</strong>, not a password prompt that grants login. The effective-config test in H3 is authoritative; a refused local network connection by itself is not sufficient evidence.</p>
+<p>After applying the Tailscale grant in H4, verify Moshi still connects on cellular data. <strong>Tailscale policy does not block ordinary LAN SSH</strong>; use the optional host firewall guidance if strict Tailscale-only reachability is mandatory.</p></div></article>
+</section>
+<section class="section" id="herdr"><div class="section-title"><span class="section-index">06</span><h2>Install and use Herdr TUI</h2></div><p class="section-intro">Herdr runs locally on the Mac. Moshi Free provides a mobile SSH terminal and manual Herdr control; Moshi Pro adds the integrated Herdr session picker, dedicated shortcut panel, multiplexer gestures and automatic reattachment.</p>
+<article class="step"><input aria-label="Mark R1 complete" class="check" data-step="R1" type="checkbox"/><div class="body"><div class="step-id">R1</div><h3>Install Herdr on the Mac</h3><p>If Homebrew is already installed, the official Homebrew package is a convenient route. Otherwise use the installation options on <a href="https://herdr.dev/tui/docs/install/" rel="noopener noreferrer" target="_blank">Herdr's official TUI install page</a>; inspect downloaded scripts before execution.</p><div class="code"><span class="codelabel">Run on Mac (Homebrew)</span><pre>brew install herdr
+herdr --version
+command -v herdr</pre></div><p>If <code>brew</code> is unavailable, use the official manual/installer instructions instead of copying an unreviewed installer from elsewhere.</p></div></article>
+<article class="step"><input aria-label="Mark R2 complete" class="check" data-step="R2" type="checkbox"/><div class="body"><div class="step-id">R2</div><h3>Start Herdr in your project locally</h3><p>Open Terminal on your Mac, go to a real project folder, then run Herdr. Create panes/workspaces for the tools you actually use—such as your Hermes writer and independent Codex reviewer.</p><div class="code"><span class="codelabel">Run on Mac (change project path)</span><pre>cd ~/projects/my-project
+herdr</pre></div><p>Replace the example directory with an existing folder. The project and agent processes execute under the macOS account you chose. <strong>Existing processes outside Herdr do not automatically move into Herdr.</strong></p></div></article>
+<article class="step"><input aria-label="Mark R3 complete" class="check" data-step="R3" type="checkbox"/><div class="body"><div class="step-id">R3</div><h3>Reconnect from Moshi to the existing Herdr session</h3>
+<p>On the Mac, detach from Herdr with <kbd>Ctrl+B</kbd>, release, then <kbd>Q</kbd>. The server continues running the panes and agents. Open the saved Mac host in <strong>Moshi</strong>.</p>
+<ul><li><strong>Moshi Pro:</strong> if the Herdr session picker appears, select your existing session directly. Its integrated multiplexer UI is a paid feature.</li><li><strong>Moshi Free (or no picker):</strong> open the SSH shell and type <code>herdr</code> to reattach. A detected session may still appear in the picker but be locked after any limited trial expires; this is a Pro entitlement, not a missing session.</li></ul>
+<div class="code"><span class="codelabel">Inside Moshi on iPhone</span><pre>command -v herdr
+herdr</pre></div>
+<p>For named sessions:</p>
+<div class="code"><span class="codelabel">Herdr named sessions</span><pre>herdr session list
+herdr session attach work</pre></div>
+<div class="notice danger"><strong>Detach ≠ stop</strong><code>herdr server stop</code> or a named-session stop terminates that server and its pane processes. Closing Moshi or detaching from Herdr is not the same as stopping the agents.</div></div></article>
+<article class="step"><input aria-label="Mark R4 complete" class="check" data-step="R4" type="checkbox"/><div class="body"><div class="step-id">R4</div><h3>Use Herdr keyboard shortcuts on your iPhone</h3>
+<table class="inline-table"><tr><th>Action</th><th>Moshi Herdr key sequence</th></tr><tr><td>Workspaces</td><td><kbd>Ctrl+B</kbd> then <kbd>W</kbd></td></tr><tr><td>Next / previous tab</td><td><kbd>Ctrl+B</kbd> then <kbd>N</kbd> / <kbd>P</kbd></td></tr><tr><td>Zoom current pane</td><td><kbd>Ctrl+B</kbd> then <kbd>Z</kbd></td></tr><tr><td>Detach and leave running</td><td><kbd>Ctrl+B</kbd> then <kbd>Q</kbd></td></tr><tr><td>Help</td><td><kbd>Ctrl+B</kbd> then <kbd>?</kbd></td></tr></table>
+<p><strong>Moshi Pro:</strong> the dedicated Herdr shortcut panel and multiplexer gestures can navigate tabs, panes and workspaces. <strong>Moshi Free:</strong> use the terminal toolbar, Control keys and (if useful) one of the three included custom shortcuts to send the same Herdr chords manually. Basic terminal touch controls are not universally Pro-only. Review agent approval prompts before accepting them.</p></div></article>
+<article class="step"><input aria-label="Mark R5 complete" class="check" data-step="R5" type="checkbox"/><div class="body"><div class="step-id">R5</div><h3>Confirm Moshi detects the Herdr session</h3>
+<p><strong>Only for Moshi Pro:</strong> with Herdr running, reconnect and look for it in the session picker. That picker is not included in Moshi Free. In either tier, normal SSH + <code>herdr</code> works; if Pro detection fails, check that the binary is available to the non-interactive SSH shell and run the diagnostics below.</p>
+<div class="code"><span class="codelabel">Mac Terminal — diagnostics</span><pre>moshi-hook doctor
+herdr session list</pre></div>
+<p>Herdr is a separate process manager. Previously launched Hermes/Codex processes outside Herdr are <strong>not imported</strong> automatically.</p></div></article></section>
+<section class="section" id="reliability"><div class="section-title"><span class="section-index">07</span><h2>Keep the Mac reachable</h2></div><p class="section-intro">Working SSH is only useful when the Mac remains powered on and awake.</p>
+<article class="step"><input aria-label="Mark L1 complete" class="check" data-step="L1" type="checkbox"/><div class="body"><div class="step-id">L1</div><h3>Review power, sleep and lid behavior</h3><ul><li>Connect reliable external power. In System Settings → Battery / Options, review relevant sleep and wake settings for your macOS version.</li><li>Prevent automatic system sleep while you need agents; screen-off is fine.</li><li>Keep the MacBook lid <strong>open</strong>, unless you have a tested, supported closed-display configuration. <code>caffeinate</code> does not guarantee operation with the lid closed.</li><li><strong>Wake for network access</strong> is helpful in some scenarios but is not a guarantee that remote SSH over Tailscale can wake a sleeping laptop.</li></ul><div class="code"><span class="codelabel">Optional diagnostic — run on Mac</span><pre>pmset -g custom
+pmset -g assertions</pre></div><p>For a temporary local test, run <code>caffeinate -i</code> in a Mac Terminal and keep that process running. Do not assume the session survives a reboot or that it overrides lid closure.</p></div></article>
+<article class="step"><input aria-label="Mark L2 complete" class="check" data-step="L2" type="checkbox"/><div class="body"><div class="step-id">L2</div><h3>Understand reboot and logout limits</h3><p>The normal macOS Tailscale GUI client runs within a user login session. After restart or logout, particularly with FileVault, remote access may be impossible until the Mac is unlocked and signed in locally. Herdr can restore layout/state in supported cases, but <strong>arbitrary running processes do not survive a full reboot</strong>. Avoid remote reboots without a recovery route.</p><div class="notice warning"><strong>For critical unattended work</strong>If you need reliable recovery after power failure and reboot, a permanently powered host with an appropriate unattended VPN/service architecture is more suitable than a standard MacBook + Tailscale GUI setup.</div></div></article>
+<article class="step"><input aria-label="Mark L3 complete" class="check" data-step="L3" type="checkbox"/><div class="body"><div class="step-id">L3</div><h3>Do the full test over cellular data</h3><ol><li>Leave the Mac awake, powered and signed in with Tailscale connected.</li><li>Disable iPhone Wi-Fi and confirm cellular data works.</li><li>Open Tailscale on the phone and confirm the tailnet is connected. If either device requests reauthentication, complete it <strong>inside the Tailscale app</strong> (or its login flow), not in Moshi.</li><li>In Moshi, connect to the Mac's MagicDNS name or its <code>100.x.y.z</code> address and run <code>herdr</code> (Moshi Free), or use the Herdr session picker (Moshi Pro).</li><li>Detach, close Moshi, lock the phone for a minute, reconnect and verify the same panes and agent processes remain.</li></ol>
+<div class="code"><span class="codelabel">Mac Terminal — optional network route test</span><pre data-template="true">TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale ping {{phoneip}}</pre></div>
+<p>This command tests Tailscale's path from the Mac to your iPhone while the phone is connected. <code>via DERP(region)</code> means an <strong>encrypted relay</strong>; a peer IP:port means a <strong>direct path</strong>. A DERP result is <em>not</em> an SSH security failure, though performance may be slower. Tailscale may start relayed and then find a direct path. If ping works but Moshi cannot connect, examine SSH, permissions and the TCP 22 grant.</p>
+<div class="validation"><h3>Pre-flight acceptance criteria</h3><div class="testgrid"><label class="testitem"><input data-test="one" type="checkbox"/> Moshi host fingerprint matched</label><label class="testitem"><input data-test="two" type="checkbox"/> New SSH connection uses key auth</label><label class="testitem"><input data-test="three" type="checkbox"/> Effective password authentication = no</label><label class="testitem"><input data-test="four" type="checkbox"/> Tailnet grant applied and SSH retested</label><label class="testitem"><input data-test="five" type="checkbox"/> Cellular-data connection works</label><label class="testitem"><input data-test="six" type="checkbox"/> Herdr pane survives disconnect</label></div></div></div></article>
+<article class="step optional"><input aria-label="Mark L4 complete" class="check" data-optional="true" data-step="L4" type="checkbox"/><div class="body"><div class="step-id">L4 <span class="opt-label">OPTIONAL</span></div><h3>Optional convenience: automatic Tailscale on iPhone</h3>
+<p>In the <strong>Tailscale iOS app → profile icon → VPN On Demand</strong>, you can arrange for automatic connection on cellular and/or Wi-Fi. Test this at home and on cellular before relying on it. An incorrect rule may prevent manual reconnection; revert the rule if your phone becomes unreachable.</p>
+<p><strong>For the simplest configuration, leave Tailscale connected</strong> and only open Moshi when you need the Mac. VPN On Demand is a convenience, not an additional requirement.</p>
+<p><a href="https://tailscale.com/docs/features/client/ios-vpn-on-demand" rel="noopener noreferrer" target="_blank">Official Tailscale VPN On Demand instructions</a>.</p></div></article></section>
+<section class="section" id="optional"><div class="section-title"><span class="section-index">08</span><h2>Optional enhancements</h2></div><p class="section-intro">Not needed for the base setup. Add only after normal SSH and Herdr are stable.</p>
+<article class="step optional"><input aria-label="Mark O1 optional step complete" class="check" data-optional="true" data-step="O1" type="checkbox"/><div class="body"><div class="step-id">O1 <span class="opt-label">OPTIONAL</span></div><h3>Optional Mosh roaming (requires Moshi Pro)</h3>
+<p>Only add this after SSH works from cellular. Mosh may be more responsive when switching between Wi-Fi and mobile data, but it needs <strong>UDP 60000–61000</strong> through your tailnet policy. Moshi currently places its Mosh transport in <strong>Pro</strong>; the standard SSH mode remains usable without it.</p>
+<div class="code"><span class="codelabel">Mac Terminal — confirm server is installed</span><pre>command -v mosh-server
+command -v tmux
+moshi-hook doctor</pre></div>
+<ol><li>Enable the <strong>Include Mosh UDP</strong> option in the device values panel near the top of this guide.</li><li>Update your <strong>existing</strong> Tailscale grant carefully and validate it. Do not accidentally delete other required rules.</li><li>In Moshi edit the connection's transport from <strong>SSH</strong> to <strong>Auto</strong>, then reconnect over cellular.</li><li>If Mosh fails, choose <strong>SSH</strong> and inspect the <code>mosh-server</code> path and UDP policy.</li></ol>
+<p>It does not keep a Mac awake, fix a closed-lid sleep, or guarantee processes survive reboot.</p></div></article>
+<article class="step optional"><input aria-label="Mark O2 optional step complete" class="check" data-optional="true" data-step="O2" type="checkbox"/><div class="body"><div class="step-id">O2 <span class="opt-label">OPTIONAL</span></div><h3>Optional: switch a saved host to MagicDNS</h3>
+<p>Easy Pair should already prefer a MagicDNS host. If it used a raw <code>100.x.y.z</code> address, you can edit the saved Moshi host to <strong><span data-view="macdns">the Mac’s full MagicDNS name</span></strong> after testing DNS resolution. MagicDNS is preferable because the name is easier to recognize.</p>
+<div class="code"><span class="codelabel">Optional test from another Mac</span><pre data-template="true">ssh {{username}}@{{macdns}}</pre></div>
+<p>Always use a tailnet address, not a public IP or <code>.local</code> address. If you later add another iPhone or computer, give it its <strong>own key and its own Tailscale access grant</strong>.</p></div></article>
+<article class="step optional"><input aria-label="Mark O3 optional step complete" class="check" data-optional="true" data-step="O3" type="checkbox"/><div class="body"><div class="step-id">O3 <span class="opt-label">OPTIONAL · EXPERT</span></div><h3>Host firewall for strict Tailscale-only network reachability</h3><p>macOS Remote Login is not bound to Tailscale just because its SSH session arrived through Tailscale. If you require port 22 to be <em>unreachable on every LAN interface</em>, develop and test a host-level PF/firewall ruleset for <strong>your actual interfaces and OS version</strong>, with local rollback access. The macOS application firewall alone is not a substitute for a verified per-interface/per-source rule. This guide deliberately does not prescribe a generic PF paste-and-run command that could lock you out.</p></div></article>
+<article class="step optional"><input aria-label="Mark O4 complete" class="check" data-optional="true" data-step="O4" type="checkbox"/><div class="body"><div class="step-id">O4 <span class="opt-label">OPTIONAL</span></div><h3>Agent inbox and push notifications</h3>
+<p>This is <strong>separate from SSH Easy Pair</strong>. For supported agents, Moshi's host hooks can deliver approvals, questions, and completion notices to its inbox and iOS notifications.</p>
+<ol><li>In Moshi, open its hook/notification pairing flow and obtain the pairing token. <strong>Never store that token in this HTML file.</strong></li><li>On the Mac, use the official host-hook instructions with your token.</li><li>Install the supported agent hooks and launch the helper service if required.</li><li>Check the output of <code>moshi-hook doctor</code> and enable iOS notifications for Moshi.</li></ol>
+<div class="code"><span class="codelabel">Mac Terminal — replace placeholder locally, NOT in this guide</span><pre>moshi-hook pair --token PASTE_TOKEN_IN_TERMINAL
+moshi-hook install
+brew services start moshi-hook
+moshi-hook doctor</pre></div>
+<p>Don't assume Hermes or your custom Hermes/Codex orchestration supports every Moshi notification type. Start by verifying that Codex events are detected; core Herdr terminal access works even without hooks.</p>
+<p><a href="https://getmoshi.app/docs/herdr" rel="noopener noreferrer" target="_blank">Moshi's Herdr integration documentation</a>.</p></div></article><article class="step optional"><input aria-label="Mark O5 complete" class="check" data-optional="true" data-step="O5" type="checkbox"/><div class="body"><div class="step-id">O5 <span class="opt-label">OPTIONAL</span></div><h3>Optional remote files, screen sharing and alternative SSH clients</h3><p><strong>Keep these off unless necessary.</strong> Herdr only needs SSH. SFTP and <code>scp</code> already use port <code>22</code>, so they do not require enabling macOS File Sharing.</p>
+<ul><li><strong>Transfer files:</strong> use an SFTP-capable client with its own SSH key and an appropriately scoped Tailscale grant. Do not expose your home folder over SMB for this.</li>
+<li><strong>Screen Sharing:</strong> enable macOS Screen Sharing only when needed, limit it to the intended account and allow port <code>5900/tcp</code> in a suitable tailnet grant only for the specific viewing device. An iPhone needs a separate compatible VNC viewer; do not forward port 5900 on your router.</li>
+<li><strong>SMB File Sharing:</strong> avoid it for this setup. If later required, share only a dedicated folder and grant <code>445/tcp</code> solely to authorized devices. Never expose SMB to the internet.</li>
+<li><strong>Alternative SSH apps:</strong> another SSH client with Ed25519 keys can work over Tailscale, but Moshi's QR pairing, Herdr controls and hook features are not portable to every client.</li></ul></div></article></section>
+<section class="section" id="recovery"><div class="section-title"><span class="section-index">09</span><h2>Recovery and troubleshooting</h2></div>
+<article class="step"><input aria-label="Mark X1 complete" class="check" data-step="X1" type="checkbox"/><div class="body"><div class="step-id">X1</div><h3>Prepare for a lost phone before travelling</h3><ol><li>Keep a second trusted admin route to the Tailscale console (another authenticated device or recovery codes).</li><li>On loss, <strong>remove the iPhone from Tailscale → Machines</strong> to revoke its access.</li><li>On the Mac, remove that phone's line from <code>~/.ssh/authorized_keys</code>; preserve other keys.</li><li>Use Apple's Find My to lock/erase the phone. Review the identity-provider account's login sessions; rotate credentials if compromise is suspected.</li></ol><p>Do not rely on normal node-key expiry as an immediate lost-device revocation mechanism.</p></div></article>
+<div aria-label="Troubleshooting topics" class="trouble"><details><summary>SSH stalls or Moshi Easy Pair refuses to connect</summary><p>Check section S2. A previously enabled Tailscale SSH server can intercept TCP port 22 in the tailnet and conflict with traditional SSH keys. The recommended macOS Standalone client cannot itself serve Tailscale SSH; check whether you are actually using the open-source tailscaled variant. Re-run <code>moshi-hook host setup</code> after resolving the conflict.</p></details>
+<details><summary>Moshi worked yesterday but cannot reach the Mac today</summary><p>First open the <strong>Tailscale app</strong> on the iPhone and verify its VPN is connected and authenticated. Check the Mac's status and device key expiry on <a href="https://login.tailscale.com/admin/machines" rel="noopener noreferrer" target="_blank">Tailscale → Machines</a>. Reauthentication prompts belong to Tailscale, <strong>not</strong> Moshi. If the Mac's tailnet key expired while you are away, you may need local access or the admin-console temporary-extension recovery procedure. Do <strong>not</strong> run <code>tailscale up --force-reauth</code> over your only remote session; it can sever that connection.</p></details>
+<details><summary>Tailscale ping reports DERP, relay or a slow connection</summary><p>From the Mac, run <code>TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale ping IPHONE_TAILSCALE_IP</code>, replacing the address. The <code>TAILSCALE_BE_CLI=1</code> prefix is an official macOS CLI override, not an extra installation requirement. <code>via DERP(region)</code> is a valid encrypted relay, not a failed VPN. A direct IP:port path is typically faster. Tailscale may initially use DERP and then upgrade to a direct path. Use <a href="https://tailscale.com/docs/reference/troubleshooting/network-configuration/derp-routing" rel="noopener noreferrer" target="_blank">Tailscale's relay troubleshooting</a> if performance matters.</p></details>
+<details><summary>SSH times out from cellular data</summary><p>Verify Mac is awake, lid is open, Tailscale connected on both devices, phone Wi-Fi is off, Mac IP is correct, Remote Login is on, and the access grant permits TCP 22. A sleeping or logged-out Mac will defeat correct SSH credentials.</p></details>
+<details><summary>SSH says “Permission denied (publickey)”</summary><p>Check username, key chosen by your iPhone SSH app, exact public key in Mac <code>~/.ssh/authorized_keys</code>, permissions (700/600), Remote Login allowed-user list, and any optional <code>from="..."</code> key prefix. Confirm the phone's tailnet IP has not changed.</p></details>
+<details><summary>Host fingerprint changed unexpectedly</summary><p>Stop. Compare against the host fingerprint saved from the Mac, and only accept a new key if you independently verified a legitimate host reinstallation or host-key rotation. Never disable StrictHostKeyChecking simply to silence the warning.</p></details>
+<details><summary>Herdr command not found over SSH</summary><p>Check <code>command -v herdr</code> from an ordinary local Mac Terminal and from the phone's <em>interactive</em> SSH session. Your login shell may not include Homebrew paths. Resolve the PATH for your shell rather than disabling SSH checks.</p></details>
+<details><summary>Herdr looks empty or stops on disconnect</summary><p>Confirm you started agents <em>inside</em> Herdr panes and reattached to the same macOS account and named/default session. Detach with Ctrl+B then Q. A reboot or deliberate <code>herdr server stop</code> does not preserve arbitrary running programs.</p></details>
+<details><summary>SSH works; Mosh fails</summary><p>Use plain SSH as the baseline. For Mosh verify <code>mosh-server</code> in PATH and whether the Tailscale grant allows UDP 60000–61000. Not all mobile clients implement Mosh; no Mosh configuration is necessary to use Herdr TUI.</p></details>
+<details><summary>A valid tailnet grant did not restrict access</summary><p>Inspect the <em>entire</em> policy file for broad existing <code>acls</code> or <code>grants</code> entries, since they combine additively. Remember Tailscale policy does not govern ordinary LAN traffic. Your host may still accept LAN SSH using valid keys.</p></details>
+<details><summary>SSH password-login test does not fail</summary><p>Stop relying on the intended hardening. Check the Include directive and run <code>sshd -T</code> using the matching user/source context. A syntactically valid snippet may be ignored or superseded; investigate the effective configuration before calling setup complete.</p></details>
+</div>
+</section>
+<section class="section" id="sources"><div class="section-title"><span class="section-index">↗</span><h2>Official documentation &amp; scope</h2></div><div class="refbox"><a href="https://getmoshi.app/docs/install" rel="noopener noreferrer" target="_blank">Moshi · install and Easy Pair</a>
+<a href="https://getmoshi.app/docs/herdr" rel="noopener noreferrer" target="_blank">Moshi · Herdr session picker and mobile shortcuts</a>
+<a href="https://getmoshi.app/docs/subscription" rel="noopener noreferrer" target="_blank">Moshi · Free vs Pro (picker, gestures and Mosh)</a>
+<a href="https://tailscale.com/docs/features/access-control/key-expiry" rel="noopener noreferrer" target="_blank">Tailscale · node-key expiry and reauthentication</a>
+<a href="https://tailscale.com/docs/reference/troubleshooting/network-configuration/derp-routing" rel="noopener noreferrer" target="_blank">Tailscale · direct vs DERP diagnostics</a>
+<a href="https://getmoshi.app/guides/tailscale" rel="noopener noreferrer" target="_blank">Moshi · Tailscale and SSH architecture</a>
+<a href="https://getmoshi.app/docs/troubleshooting" rel="noopener noreferrer" target="_blank">Moshi · SSH, mosh and hook troubleshooting</a>
+<a href="https://herdr.dev/tui/docs/how-to-work/" rel="noopener noreferrer" target="_blank">Herdr TUI · SSH, mobile and local workflows</a>
+<a href="https://herdr.dev/tui/docs/persistence-remote/" rel="noopener noreferrer" target="_blank">Herdr TUI · persistence and reconnecting</a>
+<a href="https://tailscale.com/docs/install/mac" rel="noopener noreferrer" target="_blank">Tailscale · macOS installation</a>
+<a href="https://tailscale.com/docs/features/access-control/grants/grants-explained" rel="noopener noreferrer" target="_blank">Tailscale · least-privilege grants</a>
+<a href="https://tailscale.com/docs/features/client/ios-vpn-on-demand" rel="noopener noreferrer" target="_blank">Tailscale · VPN On Demand on iOS</a>
+<a href="https://support.apple.com/guide/mac-help/allow-a-remote-computer-to-access-your-mac-mchlp1066/mac" rel="noopener noreferrer" target="_blank">Apple · enable Remote Login on the Mac</a><a href="https://getmoshi.app/docs/connections" rel="noopener noreferrer" target="_blank">Moshi · host key pinning and QR pairing</a><a href="https://getmoshi.app/docs/keyboard" rel="noopener noreferrer" target="_blank">Moshi · keyboard, toolbar and custom shortcuts</a><a href="https://tailscale.com/docs/features/tailscale-ssh" rel="noopener noreferrer" target="_blank">Tailscale · Tailscale SSH versus ordinary SSH</a><a href="https://tailscale.com/docs/reference/best-practices/security" rel="noopener noreferrer" target="_blank">Tailscale · security contacts and practices</a><a href="https://tailscale.com/docs/concepts/macos-variants" rel="noopener noreferrer" target="_blank">Tailscale · macOS variants and minimum OS</a><a href="https://tailscale.com/docs/reference/tailscale-cli?tab=macos" rel="noopener noreferrer" target="_blank">Tailscale · official macOS CLI override</a><a href="https://apps.apple.com/app/id6757859949" rel="noopener noreferrer" target="_blank">Moshi · current App Store listing (iOS requirement)</a></div><p style="font-size:12px;color:var(--muted);margin-top:11px">Reviewed against the official vendor documentation on 19 November 2026. This HTML is an instructional checklist, not an installer. Verify commands and UI labels against your actual app versions, and test SSH access before changing login settings.</p></section>
+<footer><strong>HERDR // REMOTE OPS  ·  MOSHI EDITION · v4 · COMMUNITY GUIDE</strong><p>Privacy: This guide itself makes no automatic network requests and contains no analytics, external fonts or external JavaScript. Links open only when clicked. Moshi’s optional agent notifications are a separate service that communicates with Moshi servers; review its vendor privacy documentation before enabling them. Never enter secrets in this page.</p><button class="ghostbtn" id="print" type="button">Print / Save as PDF</button></footer>
+</main>
+</div>
+<dialog aria-labelledby="resetTitle" class="reset-dialog" id="resetDialog"><h2 id="resetTitle">Reset checklist?</h2><p>This clears your completed setup steps and acceptance tests. Your saved device values and transport preference will stay intact.</p><div class="dialog-actions"><button id="cancelReset" type="button">Cancel</button><button class="danger-action" id="confirmReset" type="button">Reset progress</button></div></dialog><script>
+(() => {
+  'use strict';
+  const KEY='herdr-moshi-guide-v2';
+  const OLD_KEY='herdr-moshi-guide-v1';
+  let saved={vals:{},done:{},tests:{},mosh:false};
+  let migrating=false;
+  try{migrating=!localStorage.getItem(KEY)&&Boolean(localStorage.getItem(OLD_KEY));}catch(_e){}
+  try {const parsed=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem(OLD_KEY)||'null');if(parsed&&typeof parsed==='object') saved={...saved,...parsed,vals:parsed.vals||{},done:parsed.done||{},tests:parsed.tests||{}};} catch(_e){}
+  if(migrating && saved.done && Object.prototype.hasOwnProperty.call(saved.done,'S2')){saved.done.S3=saved.done.S2;delete saved.done.S2;}
+  const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(_e){}};
+  const fields=[...document.querySelectorAll('input[data-value]')];
+  function tailscaleIP(str){
+    if(!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(str))return false;
+    const a=str.split('.').map(Number);
+    return a.every(n=>n>=0&&n<=255)&&a[0]===100&&a[1]>=64&&a[1]<=127;
+  }
+  const validators={username:v=>/^[A-Za-z_][A-Za-z0-9_.-]{0,63}$/.test(v),macip:tailscaleIP,phoneip:tailscaleIP,macdns:v=>/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(v)&&v.toLowerCase().endsWith('.ts.net')};
+  const vals=()=>Object.fromEntries(fields.map(el=>[el.dataset.value,el.value.trim()]));
+  function validate(k,v){return validators[k](v);}
+  function refresh(){
+    const v=vals();
+    fields.forEach(el=>{const s=v[el.dataset.value];el.setAttribute('aria-invalid',String(Boolean(s)&&!validate(el.dataset.value,s)));});
+    document.querySelectorAll('[data-view]').forEach(el=>{const key=el.dataset.view;el.textContent=validate(key,v[key]||'')?v[key]:(key==='username'?'Mac short username':key==='macdns'?'the Mac’s full MagicDNS name':'Mac Tailscale IPv4');});
+    document.querySelectorAll('pre[data-template]').forEach(pre=>{
+      const templ=pre.dataset.raw;
+      const needs=[...templ.matchAll(/\{\{([a-z]+)\}\}/g)].map(m=>m[1]);
+      let ok=true;
+      const content=templ.replace(/\{\{([a-z]+)\}\}/g,(_m,k)=>{
+        const value=v[k]||'';
+        if(!value||!validate(k,value)){ok=false;return '[ENTER VALID '+k.toUpperCase()+']';}
+        return value;
+      });
+      pre.textContent=content;
+      const box=pre.closest('.code');box.classList.toggle('is-invalid',!ok);box.dataset.ready=ok?'true':'false';
+    });
+    const policy=document.querySelector('#policyPre');
+    const policyBox=document.querySelector('#policybox');
+    const ready=validate('macip',v.macip)&&validate('phoneip',v.phoneip)&&v.macip!==v.phoneip;
+    if(ready){const ips=saved.mosh?['tcp:22','udp:60000-61000']:['tcp:22'];policy.textContent=JSON.stringify({grants:[{src:[v.phoneip],dst:[v.macip],ip:ips}]},null,2);}
+    else{policy.textContent='[ENTER TWO DIFFERENT VALID TAILSCALE IPv4 ADDRESSES ABOVE]';}
+    policyBox.dataset.ready=ready?'true':'false';policyBox.classList.toggle('is-invalid',!ready);
+  }
+  fields.forEach(el=>{const k=el.dataset.value;if(typeof saved.vals[k]==='string')el.value=saved.vals[k];el.addEventListener('input',()=>{saved.vals[k]=el.value.trim();persist();refresh();});});
+  document.querySelectorAll('pre[data-template]').forEach(el=>{el.dataset.raw=el.textContent;});
+  const mosh=document.getElementById('moshToggle');mosh.checked=Boolean(saved.mosh);mosh.addEventListener('change',()=>{saved.mosh=mosh.checked;persist();refresh();});
+  refresh();
+  document.querySelectorAll('.code').forEach(box=>{
+    const pre=box.querySelector('pre');if(!pre)return;
+    const btn=document.createElement('button');btn.className='copy';btn.type='button';btn.textContent='Copy';btn.setAttribute('aria-label','Copy '+(box.querySelector('.codelabel')?.textContent||'command'));
+    btn.addEventListener('click',async()=>{
+      if(box.dataset.ready==='false'){btn.textContent='Fill in values';setTimeout(()=>btn.textContent='Copy',1800);return;}
+      const content=pre.textContent;
+      let ok=false;
+      if(navigator.clipboard&&window.isSecureContext){try{await navigator.clipboard.writeText(content);ok=true;}catch(_e){}}
+      if(!ok){const tmp=document.createElement('textarea');tmp.value=content;tmp.style.position='fixed';tmp.style.left='-9999px';document.body.appendChild(tmp);tmp.focus();tmp.select();try{ok=document.execCommand('copy');}catch(_e){}tmp.remove();}
+      btn.textContent=ok?'Copied':'Select manually';setTimeout(()=>btn.textContent='Copy',1900);
+    });box.appendChild(btn);
+  });
+  const steps=[...document.querySelectorAll('input[data-step]')];
+  const required=steps.filter(el=>el.dataset.optional!=='true');
+  function progress(){const count=required.filter(el=>el.checked).length;const pct=required.length?count/required.length*100:0;document.getElementById('progressText').textContent=count+' / '+required.length;document.getElementById('progressfill').style.width=pct+'%';document.getElementById('sideFill').style.width=pct+'%';}
+  steps.forEach(el=>{el.checked=Boolean(saved.done[el.dataset.step]);el.closest('.step').classList.toggle('complete',el.checked);el.addEventListener('change',()=>{saved.done[el.dataset.step]=el.checked;el.closest('.step').classList.toggle('complete',el.checked);persist();progress();});});
+  document.querySelectorAll('input[data-test]').forEach(el=>{el.checked=Boolean(saved.tests[el.dataset.test]);el.addEventListener('change',()=>{saved.tests[el.dataset.test]=el.checked;persist();});});
+  const resetDialog=document.getElementById('resetDialog');
+  document.getElementById('reset').addEventListener('click',()=>resetDialog.showModal());
+  document.getElementById('cancelReset').addEventListener('click',()=>resetDialog.close());
+  document.getElementById('confirmReset').addEventListener('click',()=>{
+    saved.done={};saved.tests={};
+    steps.forEach(el=>{el.checked=false;el.closest('.step').classList.remove('complete');});
+    document.querySelectorAll('input[data-test]').forEach(el=>el.checked=false);
+    persist();progress();resetDialog.close();
+  });
+  document.getElementById('print').addEventListener('click',()=>window.print());
+  progress();
+})();
+</script>
+</body>
+</html>
