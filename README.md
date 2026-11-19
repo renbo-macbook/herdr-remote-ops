@@ -37,6 +37,14 @@ Moshi Free supports ordinary SSH; some Herdr integration and Mosh transport feat
 
 In the repository, navigate to **Settings → Pages → Build and deployment**. Set **Source: Deploy from a branch**, **Branch: `main`**, **Folder: `/ (root)`**, then save. GitHub Pages will serve `index.html` at the website linked above once deployment succeeds.
 
+## What's new in v1.1
+
+- Step-by-step lost-phone response, including an SSH authorized-key backup, precise key revocation, and verification.
+- Tailscale's documented **30-minute temporary node-key extension** for recovering an expired MacBook, with warnings about losing the only remote session.
+- An explanation of OpenSSH `Include` expansion and the `050-` SSH hardening snippet's relationship to macOS configuration ordering.
+
+The guide continues to require verification with `sshd -T` before considering SSH hardening effective. Optional Mosh roaming is supported through an explicit UDP grant toggle.
+
 ## Project information
 
 This is an **unofficial community guide**, not endorsed by or affiliated with Herdr, Moshi, Tailscale, Apple or any other named project. Vendor names and trademarks belong to their respective owners. Commands and interfaces can change; validate them against the relevant vendor documentation and your device versions.
